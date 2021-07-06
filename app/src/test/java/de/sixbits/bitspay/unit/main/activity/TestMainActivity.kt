@@ -1,7 +1,6 @@
 package de.sixbits.bitspay.unit.main.activity
 
 import android.os.Build
-import android.os.Looper
 import android.os.Looper.getMainLooper
 import android.view.View
 import androidx.lifecycle.LifecycleOwner
@@ -9,10 +8,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import de.sixbits.bitspay.ImageResponseFactory
 import de.sixbits.bitspay.R
 import de.sixbits.bitspay.main.ui.MainActivity
-import de.sixbits.bitspay.main.view_model.MainViewModel
+import de.sixbits.bitspay.main.view_model.SharedViewModel
 import de.sixbits.bitspay.network.model.ImageListItemModel
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -29,10 +27,8 @@ import org.mockito.Mockito.verify
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 import org.mockito.junit.jupiter.MockitoExtension
-import org.mockito.kotlin.any
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
@@ -49,7 +45,7 @@ class TestMainActivity {
     private lateinit var activityController: ActivityController<MainActivity>
 
     @Mock
-    private lateinit var viewModel: MainViewModel
+    private lateinit var viewModel: SharedViewModel
 
     @Mock
     private lateinit var searchImagesLiveData: MutableLiveData<List<ImageListItemModel>>

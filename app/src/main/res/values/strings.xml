@@ -2,4 +2,8 @@
     <string name="app_name">PixaClient</string>
     <string name="image">Image</string>
     <string name="search_query">Search Query</string>
+    <string name="trash">Trash</string>
+    <string name="feed">Feed</string>
+    <string name="delete">Delete</string>
+    <string name="camera">Camera</string>
 </resources>

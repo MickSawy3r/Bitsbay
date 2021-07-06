@@ -1,62 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".main.ui.MainActivity">
+    xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
 
-    <com.google.android.material.card.MaterialCardView
+        <variable
+            name="sharedViewModel"
+            type="de.sixbits.bitspay.main.view_model.SharedViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="@android:color/transparent"
-        android:id="@+id/search_bar"
-        android:focusable="false"
-        android:padding="8dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent"
+        tools:context=".main.ui.MainActivity">
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/et_search_bar"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/main_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:commitIcon="@drawable/ic_search"
-            app:iconifiedByDefault="false"
-            android:focusable="false"
-            app:queryHint="@string/search_query" />
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:id="@+id/search_disable_overlay"
-            android:visibility="gone"
-            android:alpha=".5"
-            android:background="@color/white"
-            android:layout_height="match_parent" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search_bar">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_search_result"
-            android:layout_width="match_parent"
-            android:elevation="4dp"
-            android:visibility="gone"
-            android:layout_height="match_parent"
-            tools:listitem="@layout/row_images_list" />
-
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/pb_loading_search_result"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="visible" />
-    </FrameLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:menu="@menu/home_navigation" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,5 +1,7 @@
 package de.sixbits.bitspay.main.callbacks
 
+import de.sixbits.bitspay.network.model.ImageListItemModel
+
 interface OnImageClickListener {
-    fun onClick(id: Int)
+    fun onClick(image: ImageListItemModel)
 }

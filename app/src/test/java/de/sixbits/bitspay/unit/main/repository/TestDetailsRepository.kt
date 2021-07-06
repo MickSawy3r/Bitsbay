@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import de.sixbits.bitspay.ImageResponseFactory
 import de.sixbits.bitspay.database.dao.CacheDao
-import de.sixbits.bitspay.database.utils.ImageEntityMapper
+import de.sixbits.bitspay.mapper.ImageEntityMapper
 import de.sixbits.bitspay.network.manager.PixabayManager
 import de.sixbits.bitspay.network.utils.NetworkUtils
 import io.reactivex.Completable
@@ -68,7 +68,7 @@ class TestDetailsRepository {
         // Test when a network error
         Mockito.`when`(pixabayManager.getImageDetails(123))
             .thenReturn(Observable.error(Exception("No Response")))
-        Mockito.`when`(cacheDao.insert(ImageEntityMapper.fromImageDetailsModel(detailsItem)))
+        Mockito.`when`(cacheDao.insert(ImageEntityMapper.fromImageListItem(detailsItem)))
             .thenReturn(Completable.complete())
 
         detailsRepository =

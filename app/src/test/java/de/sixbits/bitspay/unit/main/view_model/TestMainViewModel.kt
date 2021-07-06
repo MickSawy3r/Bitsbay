@@ -3,11 +3,11 @@ package de.sixbits.bitspay.unit.main.view_model
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import de.sixbits.bitspay.ImageResponseFactory
 import de.sixbits.bitspay.main.repository.MainRepository
-import de.sixbits.bitspay.main.view_model.MainViewModel
-import io.reactivex.Observable
-import io.reactivex.android.plugins.RxAndroidPlugins
-import io.reactivex.plugins.RxJavaPlugins
-import io.reactivex.schedulers.Schedulers
+import de.sixbits.bitspay.main.view_model.SharedViewModel
+import io.reactivex.rxjava3.android.plugins.RxAndroidPlugins
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.plugins.RxJavaPlugins
+import io.reactivex.rxjava3.schedulers.Schedulers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +33,7 @@ class TestMainViewModel {
 
         Mockito.`when`(mainRepository.searchFor(anyString()))
             .thenReturn(Observable.error(Exception("Error")))
-        val mainViewModel = MainViewModel(mainRepository)
+        val mainViewModel = SharedViewModel(mainRepository)
 
         mainViewModel.searchImagesLiveData.observeForever {
             assert(it.isEmpty())
@@ -47,7 +47,7 @@ class TestMainViewModel {
 
         Mockito.`when`(mainRepository.searchFor(anyString()))
             .thenReturn(Observable.just(listOf(ImageResponseFactory.getImageListItem())))
-        val mainViewModel = MainViewModel(mainRepository)
+        val mainViewModel = SharedViewModel(mainRepository)
 
         mainViewModel.searchImagesLiveData.observeForever {
             assert(it.isNotEmpty())
@@ -61,7 +61,7 @@ class TestMainViewModel {
         Mockito.`when`(mainRepository.getCached())
             .thenReturn(Observable.just(listOf(ImageResponseFactory.getImageListItem())))
 
-        val mainViewModel = MainViewModel(mainRepository)
+        val mainViewModel = SharedViewModel(mainRepository)
 
         mainViewModel.searchImagesLiveData.observeForever {
             assert(it.isNotEmpty())
@@ -76,7 +76,7 @@ class TestMainViewModel {
         Mockito.`when`(mainRepository.getCached())
             .thenReturn(Observable.just(listOf()))
 
-        val mainViewModel = MainViewModel(mainRepository)
+        val mainViewModel = SharedViewModel(mainRepository)
 
         mainViewModel.searchImagesLiveData.observeForever {
             assert(it.isEmpty())

@@ -41,7 +41,14 @@ android {
 
         testInstrumentationRunner "de.sixbits.bitspay.CustomTestRunner"
 
-        buildConfigField "String", "FOURSQUARE_BASE_URL", "\"https://api.foursquare.com/v2/\""
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += [
+                        "room.schemaLocation":"$projectDir/schemas".toString(),
+                        "room.incremental":"true",
+                        "room.expandProjection":"true"]
+            }
+        }
     }
     signingConfigs {
         release {
@@ -121,6 +128,14 @@ dependencies {
     def maps_version = "17.0.1"
     def location_version = "18.0.0"
     def firebase_version = "28.2.0"
+    def room_version = "2.3.0"
+
+    // region Room
+    implementation "androidx.room:room-runtime:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    testImplementation "androidx.room:room-testing:$room_version"
+    implementation "androidx.room:room-rxjava3:$room_version"
+    // endregion
 
     implementation platform("com.google.firebase:firebase-bom:$firebase_version")
 
