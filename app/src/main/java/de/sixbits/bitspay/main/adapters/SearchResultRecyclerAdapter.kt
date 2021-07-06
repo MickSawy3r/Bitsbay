@@ -21,7 +21,8 @@ private const val TAG = "SearchResultRecyclerAda"
 class SearchResultRecyclerAdapter constructor(
     private var searchResult: List<ImageListItemModel>,
     private val requestBuilder: RequestBuilder<Drawable>,
-    private val onImageClickListener: OnImageClickListener
+    private val onImageClickListener: OnImageClickListener? = null,
+    private val isSwipedEnabled: Boolean = false
 ) :
     RecyclerView.Adapter<SearchResultRecyclerAdapter.SearchResultRecyclerViewHolder>() {
 
@@ -41,7 +42,7 @@ class SearchResultRecyclerAdapter constructor(
         )
 
         vh.binding.cardImage.setOnLongClickListener {
-            onImageClickListener.startDragging(vh)
+            onImageClickListener?.startDragging(vh)
             return@setOnLongClickListener true
         }
 
@@ -57,10 +58,11 @@ class SearchResultRecyclerAdapter constructor(
             .into(holder.binding.ivImageItemThumbnail)
 
         holder.binding.cardImage.setOnClickListener {
-            onImageClickListener.onClick(searchResult[position])
+            onImageClickListener?.onClick(searchResult[position])
         }
 
         holder.binding.ivDelete.setOnClickListener {
+            onImageClickListener?.onSharePressed(image = searchResult[position])
         }
     }
 
@@ -85,14 +87,9 @@ class SearchResultRecyclerAdapter constructor(
         searchResult = result
     }
 
-    private fun getShareIntent(context: Context, path: String) {
-        val shareIntent = Intent(Intent.ACTION_SEND)
-        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-
-        shareIntent.type = "image/*"
-
-        val uri = Uri.fromFile(context.getFileStreamPath(path))
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
-        onImageClickListener.onSharePressed(shareIntent)
+    fun deleteAt(index: Int) {
+        if (isSwipedEnabled) {
+            onImageClickListener?.onDelete(searchResult[index])
+        }
     }
 }

@@ -8,5 +8,6 @@ import de.sixbits.bitspay.network.model.ImageListItemModel
 interface OnImageClickListener {
     fun onClick(image: ImageListItemModel)
     fun startDragging(view: RecyclerView.ViewHolder)
-    fun onSharePressed(intent: Intent)
+    fun onSharePressed(image: ImageListItemModel)
+    fun onDelete(image: ImageListItemModel)
 }

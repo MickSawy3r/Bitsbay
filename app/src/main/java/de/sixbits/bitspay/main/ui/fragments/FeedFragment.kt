@@ -1,6 +1,7 @@
 package de.sixbits.bitspay.main.ui.fragments
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -81,7 +82,12 @@ class FeedFragment @JvmOverloads constructor(
         })
 
         feedViewModel.searchImagesLiveData.observe(viewLifecycleOwner, {
-            searchRecyclerAdapter.switchItems(it)
+            if (it.isEmpty()) {
+                uiBinding.rvSearchResult.visibility = View.INVISIBLE
+                uiBinding.lottie.visibility = View.VISIBLE
+            } else {
+                searchRecyclerAdapter.switchItems(it)
+            }
         })
 
         feedViewModel.errorLiveData.observe(viewLifecycleOwner, {
@@ -152,7 +158,19 @@ class FeedFragment @JvmOverloads constructor(
         itemTouchHelper.startDrag(view)
     }
 
-    override fun onSharePressed(intent: Intent) {
+    override fun onSharePressed(image: ImageListItemModel) {
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+
+        shareIntent.type = "image/*"
+
+        val uri = Uri.fromFile(requireContext().getFileStreamPath(image.thumbnail))
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
+
+        activity?.startActivity(shareIntent)
+    }
+
+    override fun onDelete(image: ImageListItemModel) {
     }
 
     @TestOnly

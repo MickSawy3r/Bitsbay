@@ -1,5 +1,7 @@
 package de.sixbits.bitspay.main.ui.helpers
 
+import android.content.Context
+import android.graphics.Canvas
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.DOWN
 import androidx.recyclerview.widget.ItemTouchHelper.UP
@@ -37,9 +39,8 @@ object DragHelper {
                     viewHolder: RecyclerView.ViewHolder,
                     direction: Int
                 ) {
-                    // 4. Code block for horizontal swipe.
-                    //    ItemTouchHelper handles horizontal swipe as well, but
-                    //    it is not relevant with reordering. Ignoring here.
+                    val adapter = viewHolder.bindingAdapter as SearchResultRecyclerAdapter
+                    adapter.deleteAt(viewHolder.bindingAdapterPosition)
                 }
             }
 

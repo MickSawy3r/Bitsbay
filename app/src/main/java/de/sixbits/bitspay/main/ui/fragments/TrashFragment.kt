@@ -69,7 +69,8 @@ class TrashFragment : Fragment(), OnImageClickListener {
         searchRecyclerAdapter = SearchResultRecyclerAdapter(
             listOf(),
             searchRecyclerRequestBuilder,
-            this
+            this,
+            true
         )
 
         // Attach the adapter
@@ -91,7 +92,11 @@ class TrashFragment : Fragment(), OnImageClickListener {
     override fun startDragging(view: RecyclerView.ViewHolder) {
     }
 
-    override fun onSharePressed(intent: Intent) {
+    override fun onSharePressed(image: ImageListItemModel) {
+    }
+
+    override fun onDelete(image: ImageListItemModel) {
+        trashViewModel.deleteItem(image)
     }
 
     @TestOnly

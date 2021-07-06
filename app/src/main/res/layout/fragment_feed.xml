@@ -56,6 +56,18 @@
                     tools:listitem="@layout/row_images_list" />
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/lottie"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/search_bar"
+                app:lottie_autoPlay="true"
+                app:lottie_fileName="empty-list.json"
+                app:lottie_repeatMode="restart" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton

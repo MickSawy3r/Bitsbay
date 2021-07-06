@@ -36,12 +36,14 @@ class FeedViewModel @Inject constructor(
                         mainRepository.insertItemList(it)
                             .observeOn(Schedulers.io())
                             .subscribeOn(Schedulers.io())
-                            .subscribe({
-                                sharedPreferencesHelper.setInited(true)
-                                getAll()
-                            }, { err ->
-                                Log.d(TAG, "init: error ${err.message}")
-                            })
+                            .subscribe(
+                                {
+                                    sharedPreferencesHelper.setInited(true)
+                                    getAll()
+                                }, { err ->
+                                    Log.d(TAG, "init: error ${err.message}")
+                                }
+                            )
                     }, {
                         errorLiveData.postValue(it.message)
                     }
