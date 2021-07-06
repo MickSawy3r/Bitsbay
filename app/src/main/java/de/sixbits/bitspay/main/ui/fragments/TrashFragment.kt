@@ -1,5 +1,6 @@
 package de.sixbits.bitspay.main.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -73,8 +74,6 @@ class TrashFragment : Fragment(), OnImageClickListener {
 
         // Attach the adapter
         uiBinding.rvTrashList.adapter = searchRecyclerAdapter
-        searchRecyclerAdapter.stateRestorationPolicy =
-            RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 
     override fun onClick(image: ImageListItemModel) {
@@ -84,9 +83,15 @@ class TrashFragment : Fragment(), OnImageClickListener {
                 trashViewModel.deleteItem(image)
             }
             .setNegativeButton("No") { _, _ ->
-                // Respond to positive button press
+                // Respond to negative button press
             }
             .show()
+    }
+
+    override fun startDragging(view: RecyclerView.ViewHolder) {
+    }
+
+    override fun onSharePressed(intent: Intent) {
     }
 
     @TestOnly

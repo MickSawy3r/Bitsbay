@@ -20,6 +20,12 @@ open class MainRepository @Inject constructor(
     private val cacheDao: CacheDao
 ) {
 
+    fun removeList(images: List<ImageListItemModel>): Completable {
+        return this.cacheDao.deleteList(images = images.map {
+            ImageEntityMapper.fromImageListItem(it)
+        })
+    }
+
     fun getSaved(): Observable<List<ImageListItemModel>> {
         return this.cacheDao.getAll()
             .map { cached ->
@@ -81,6 +87,5 @@ open class MainRepository @Inject constructor(
 
     fun getDummyContent(): Observable<List<ImageListItemModel>> {
         return pixabayManager.getSearchResult("food")
-
     }
 }

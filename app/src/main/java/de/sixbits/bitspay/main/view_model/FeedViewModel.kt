@@ -19,13 +19,14 @@ class FeedViewModel @Inject constructor(
     private val mainRepository: MainRepository,
     private val sharedPreferencesHelper: SharedPreferencesHelper
 ) : ViewModel() {
+
     val loadingLiveData = MutableLiveData<Boolean>()
     val searchImagesLiveData = MutableLiveData<List<ImageListItemModel>>()
     val errorLiveData = MutableLiveData<String>()
+    val gridModeLiveData = MutableLiveData(GridMode.MASONRY)
 
     fun init() {
         if (!sharedPreferencesHelper.getInited()) {
-            Log.d(TAG, "init: ")
             mainRepository.getDummyContent()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
@@ -36,6 +37,7 @@ class FeedViewModel @Inject constructor(
                             .observeOn(Schedulers.io())
                             .subscribeOn(Schedulers.io())
                             .subscribe({
+                                sharedPreferencesHelper.setInited(true)
                                 getAll()
                             }, { err ->
                                 Log.d(TAG, "init: error ${err.message}")
@@ -52,7 +54,7 @@ class FeedViewModel @Inject constructor(
     fun getAll() {
         Log.d(TAG, "getAll: ")
         loadingLiveData.postValue(true)
-        mainRepository.getTrashed()
+        mainRepository.getSaved()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -84,5 +86,38 @@ class FeedViewModel @Inject constructor(
                     errorLiveData.postValue(it.message)
                 }
             )
+    }
+
+    fun trashImage(image: ImageListItemModel) {
+        Log.d(TAG, "searchFor: ")
+        loadingLiveData.postValue(true)
+
+        EspressoIdlingResource.increment()
+        mainRepository.trashImage(image)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {
+                    EspressoIdlingResource.decrement()
+                    getAll()
+                    loadingLiveData.postValue(false)
+                }, {
+                    errorLiveData.postValue(it.message)
+                }
+            )
+    }
+
+    fun switchViewMode() {
+        Log.d(TAG, "switchViewMode: ")
+        if (gridModeLiveData.value == GridMode.MASONRY) {
+            gridModeLiveData.postValue(GridMode.GRID)
+        } else {
+            gridModeLiveData.postValue(GridMode.MASONRY)
+        }
+    }
+
+    enum class GridMode {
+        MASONRY,
+        GRID
     }
 }

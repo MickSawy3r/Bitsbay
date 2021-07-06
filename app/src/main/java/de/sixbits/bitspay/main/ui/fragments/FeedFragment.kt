@@ -1,5 +1,6 @@
 package de.sixbits.bitspay.main.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,6 +10,8 @@ import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bumptech.glide.Glide
@@ -19,17 +22,23 @@ import de.sixbits.bitspay.R
 import de.sixbits.bitspay.databinding.FragmentFeedBinding
 import de.sixbits.bitspay.main.adapters.SearchResultRecyclerAdapter
 import de.sixbits.bitspay.main.callbacks.OnImageClickListener
+import de.sixbits.bitspay.main.ui.helpers.DragHelper
+import de.sixbits.bitspay.main.ui.helpers.DragHelper.itemTouchHelper
 import de.sixbits.bitspay.main.view_model.FeedViewModel
+import de.sixbits.bitspay.main.view_model.SharedViewModel
 import de.sixbits.bitspay.network.model.ImageListItemModel
 import org.jetbrains.annotations.TestOnly
 
 private const val TAG = "FeedFragment"
 
 @AndroidEntryPoint
-class FeedFragment : Fragment(), OnImageClickListener {
+class FeedFragment @JvmOverloads constructor(
+    private val parentStoreOwner: ViewModelStoreOwner? = null
+) : Fragment(), OnImageClickListener {
 
     private lateinit var uiBinding: FragmentFeedBinding
     private lateinit var feedViewModel: FeedViewModel
+    private lateinit var sharedViewModel: SharedViewModel
 
     private lateinit var searchRecyclerAdapter: SearchResultRecyclerAdapter
 
@@ -45,14 +54,14 @@ class FeedFragment : Fragment(), OnImageClickListener {
             false
         )
 
-        Log.d(TAG, "onCreateView: ")
-
         feedViewModel = ViewModelProvider(this).get(FeedViewModel::class.java)
+        if (parentStoreOwner != null) {
+            sharedViewModel = ViewModelProvider(parentStoreOwner).get(SharedViewModel::class.java)
+        }
 
         feedViewModel.init()
 
         initListeners()
-
         initViews()
         initRecyclerView()
 
@@ -60,6 +69,12 @@ class FeedFragment : Fragment(), OnImageClickListener {
     }
 
     private fun initListeners() {
+        if (this::sharedViewModel.isInitialized) {
+            sharedViewModel.changeLiveData.observe(viewLifecycleOwner, {
+                feedViewModel.getAll()
+            })
+        }
+
         // Handle data response
         feedViewModel.loadingLiveData.observe(viewLifecycleOwner, {
             uiBinding.refreshLayout.isRefreshing = it
@@ -72,9 +87,22 @@ class FeedFragment : Fragment(), OnImageClickListener {
         feedViewModel.errorLiveData.observe(viewLifecycleOwner, {
             Snackbar.make(uiBinding.root, it, Snackbar.LENGTH_SHORT).show()
         })
+
+        feedViewModel.gridModeLiveData.observe(viewLifecycleOwner, {
+            Log.d(TAG, "gridViewMode: $it")
+            if (it == FeedViewModel.GridMode.MASONRY) {
+                uiBinding.rvSearchResult.layoutManager =
+                    StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+            } else {
+                uiBinding.rvSearchResult.layoutManager = GridLayoutManager(context, 2)
+            }
+        })
     }
 
     private fun initViews() {
+        uiBinding.fabFeed.setOnClickListener {
+            feedViewModel.switchViewMode()
+        }
         uiBinding.etSearchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 uiBinding.rvSearchResult.visibility = View.GONE
@@ -89,10 +117,6 @@ class FeedFragment : Fragment(), OnImageClickListener {
     }
 
     private fun initRecyclerView() {
-        val activeLayoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-
-        uiBinding.rvSearchResult.layoutManager = activeLayoutManager
-
         // For Preloading images
         val searchRecyclerRequestBuilder = Glide
             .with(this)
@@ -107,25 +131,32 @@ class FeedFragment : Fragment(), OnImageClickListener {
 
         // Attach the adapter
         uiBinding.rvSearchResult.adapter = searchRecyclerAdapter
-        searchRecyclerAdapter.stateRestorationPolicy =
-            RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-    }
+        uiBinding.refreshLayout.isEnabled = false
 
-    @TestOnly
-    fun setTestViewModel(testViewModel: FeedViewModel) {
-        feedViewModel = testViewModel
+        itemTouchHelper.attachToRecyclerView(uiBinding.rvSearchResult)
     }
 
     override fun onClick(image: ImageListItemModel) {
-
         MaterialAlertDialogBuilder(requireContext())
             .setMessage("Are you sure you want to delete this entry?")
             .setPositiveButton("Yes") { _, _ ->
-
+                feedViewModel.trashImage(image)
             }
             .setNegativeButton("No") { _, _ ->
                 // Respond to positive button press
             }
             .show()
+    }
+
+    override fun startDragging(view: RecyclerView.ViewHolder) {
+        itemTouchHelper.startDrag(view)
+    }
+
+    override fun onSharePressed(intent: Intent) {
+    }
+
+    @TestOnly
+    fun setTestViewModel(testViewModel: FeedViewModel) {
+        feedViewModel = testViewModel
     }
 }

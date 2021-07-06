@@ -28,6 +28,9 @@ interface CacheDao {
     @Update
     fun update(image: ImageEntity): Completable
 
-    @Delete()
+    @Delete
     fun delete(image: ImageEntity): Completable
+
+    @Delete()
+    fun deleteList(images: List<ImageEntity>): Completable
 }

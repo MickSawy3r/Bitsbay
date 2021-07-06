@@ -18,8 +18,21 @@ class SharedPreferencesHelper @Inject constructor(private val application: Appli
         return prefs.getBoolean(INITED, false)
     }
 
+    fun setNotificationsScheduled(Scheduled: Boolean) {
+        val prefs = application.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putBoolean(SCHEDULED, Scheduled)
+            .apply()
+    }
+
+    fun getNotificationsScheduled(): Boolean {
+        val prefs = application.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(SCHEDULED, false)
+    }
+
     companion object {
         private const val SHARED_PREFERENCES_NAME = "GLOBAL"
         private const val INITED = "inited"
+        private const val SCHEDULED = "inited"
     }
 }
