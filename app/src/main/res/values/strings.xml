@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PixaClient</string>
+    <string name="image">Image</string>
+    <string name="search_query">Search Query</string>
+</resources>
