@@ -3,9 +3,8 @@ package de.sixbits.bitspay.main.ui.fragments
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
+import android.provider.MediaStore.Images
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -31,7 +30,8 @@ import de.sixbits.bitspay.main.view_model.FeedViewModel
 import de.sixbits.bitspay.main.view_model.SharedViewModel
 import de.sixbits.bitspay.network.model.ImageListItemModel
 import org.jetbrains.annotations.TestOnly
-import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+
 
 private const val TAG = "FeedFragment"
 
@@ -98,28 +98,29 @@ class FeedFragment @JvmOverloads constructor(
         })
 
         feedViewModel.shareImageLiveData.observe(viewLifecycleOwner, {
-            val bytes = ByteArrayOutputStream()
-            it.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-
-            val path = MediaStore.Images.Media.insertImage(
-                context?.contentResolver,
-                it,
-                "Title",
-                null
-            )
-            val imageIntent = Intent(Intent.ACTION_SEND)
-            imageIntent.type = "image/*"
-            imageIntent.putExtra(Intent.EXTRA_STREAM, path)
-            imageIntent.putExtra(Intent.EXTRA_TEXT, "From Bitspay")
-            startActivity(Intent.createChooser(imageIntent, "Share with"))
+            val icon: Bitmap = it
+            val values = ContentValues()
+            values.put(Images.Media.TITLE, "title")
+            values.put(Images.Media.MIME_TYPE, "image/*")
+            val uri = requireContext().contentResolver.insert(
+                Images.Media.EXTERNAL_CONTENT_URI,
+                values
+            ) ?: return@observe
 
 
-//            val shareIntent: Intent = Intent().apply {
-//                action = Intent.ACTION_SEND
-//                putExtra(Intent.EXTRA_STREAM, it)
-//                type = "image/jpeg"
-//            }
-//            startActivity(Intent.createChooser(shareIntent, resources.getText(R.string.send_to)))
+            val outstream: OutputStream?
+            try {
+                outstream = requireActivity().contentResolver.openOutputStream(uri)
+                icon.compress(Bitmap.CompressFormat.JPEG, 100, outstream)
+                outstream?.close()
+            } catch (e: Exception) {
+                System.err.println(e.toString())
+            }
+
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.setDataAndType(uri, "image/*")
+            intent.putExtra("mimeType", "image/*")
+            this.startActivity(Intent.createChooser(intent, "Set as:"))
         })
 
         feedViewModel.gridModeLiveData.observe(viewLifecycleOwner, {
@@ -187,6 +188,7 @@ class FeedFragment @JvmOverloads constructor(
     }
 
     override fun onSharePressed(image: ImageListItemModel) {
+        Snackbar.make(uiBinding.root, "Sending Image", Snackbar.LENGTH_SHORT).show()
         feedViewModel.requestImageStream(image)
     }
 
