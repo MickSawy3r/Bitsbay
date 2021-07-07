@@ -21,10 +21,9 @@ class SharedViewModel @Inject constructor(
     private val mainRepository: MainRepository,
     private val preferencesHelper: SharedPreferencesHelper,
     private val notificationsHelper: NotificationsHelper
-) :
-    ViewModel() {
+) : ViewModel() {
 
-    val activePageLiveData = MutableLiveData<ActiveFragment>(ActiveFragment.FEED)
+    val activePageLiveData = MutableLiveData(ActiveFragment.FEED)
     val changeLiveData = MutableLiveData<Boolean>()
     val errorLiveData = MutableLiveData<String>()
 
@@ -57,6 +56,7 @@ class SharedViewModel @Inject constructor(
     }
 
     fun scheduleNotificationIfNotExists() {
+        notificationsHelper.scheduleNotification()
         if (!preferencesHelper.getNotificationsScheduled()) {
             preferencesHelper.setNotificationsScheduled(true)
             notificationsHelper.scheduleNotification()

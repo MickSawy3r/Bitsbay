@@ -16,8 +16,8 @@ interface CacheDao {
     @Query("SELECT * from image_entity where id = :id AND trashed = :isTrashed")
     fun getById(id: Int, isTrashed: Boolean = false): Observable<ImageEntity>
 
-    @Query("SELECT * from image_entity where username = :searchQuery or tags LIKE :searchQuery AND trashed = :isTrashed")
-    fun search(searchQuery: String, isTrashed: Boolean = false): Observable<List<ImageEntity>>
+    @Query("SELECT * from image_entity where username = :searchQuery or tags LIKE :searchQuery")
+    fun search(searchQuery: String): Observable<List<ImageEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(image: ImageEntity): Completable
@@ -31,6 +31,6 @@ interface CacheDao {
     @Delete
     fun delete(image: ImageEntity): Completable
 
-    @Delete()
+    @Delete
     fun deleteList(images: List<ImageEntity>): Completable
 }

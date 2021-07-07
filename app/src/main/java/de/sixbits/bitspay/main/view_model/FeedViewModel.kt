@@ -1,8 +1,13 @@
 package de.sixbits.bitspay.main.view_model
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.bumptech.glide.RequestManager
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import dagger.hilt.android.lifecycle.HiltViewModel
 import de.sixbits.bitspay.EspressoIdlingResource
 import de.sixbits.bitspay.main.repository.MainRepository
@@ -17,13 +22,15 @@ private const val TAG = "FeedViewModel"
 @HiltViewModel
 class FeedViewModel @Inject constructor(
     private val mainRepository: MainRepository,
-    private val sharedPreferencesHelper: SharedPreferencesHelper
+    private val sharedPreferencesHelper: SharedPreferencesHelper,
+    private val requestManager: RequestManager
 ) : ViewModel() {
 
     val loadingLiveData = MutableLiveData<Boolean>()
     val searchImagesLiveData = MutableLiveData<List<ImageListItemModel>>()
     val errorLiveData = MutableLiveData<String>()
     val gridModeLiveData = MutableLiveData(GridMode.MASONRY)
+    val shareImageLiveData = MutableLiveData<Bitmap>()
 
     fun init() {
         if (!sharedPreferencesHelper.getInited()) {
@@ -116,6 +123,21 @@ class FeedViewModel @Inject constructor(
         } else {
             gridModeLiveData.postValue(GridMode.MASONRY)
         }
+    }
+
+    fun requestImageStream(image: ImageListItemModel) {
+        requestManager
+            .asBitmap()
+            .load(image.thumbnail)
+            .into(object: CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    shareImageLiveData.postValue(resource)
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    TODO("Not yet implemented")
+                }
+            })
     }
 
     enum class GridMode {

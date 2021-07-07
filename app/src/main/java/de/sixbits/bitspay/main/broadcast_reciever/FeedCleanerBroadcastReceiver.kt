@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import de.sixbits.bitspay.main.repository.MainRepository
 import de.sixbits.bitspay.network.model.ImageListItemModel
@@ -15,6 +16,8 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import javax.inject.Inject
 
+
+private const val TAG = "FeedCleanerBroadcastRec"
 
 @AndroidEntryPoint
 class FeedCleanerBroadcastReceiver : BroadcastReceiver() {
@@ -26,13 +29,17 @@ class FeedCleanerBroadcastReceiver : BroadcastReceiver() {
     lateinit var preferencesHelper: SharedPreferencesHelper
 
     override fun onReceive(context: Context?, intent: Intent?) {
+        Log.d(TAG, "onReceive: ")
         preferencesHelper.setNotificationsScheduled(false)
         mainRepository.getSaved()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                if (it.size > 10 && context != null && intent != null) {
-                    removeList(context, intent, it.subList(10, it.size))
+                if (context != null && intent != null) {
+                    if (it.size > 10) {
+                        removeList(context, intent, it.subList(10, it.size))
+                    }
+                    showNotification(context, intent)
                 }
             }
     }
@@ -42,22 +49,26 @@ class FeedCleanerBroadcastReceiver : BroadcastReceiver() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                val notificationManager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                val notification: Notification? =
-                    intent.getParcelableExtra(NOTIFICATION)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val importance = NotificationManager.IMPORTANCE_HIGH
-                    val notificationChannel = NotificationChannel(
-                        NOTIFICATION_CHANNEL_ID,
-                        "NOTIFICATION_CHANNEL_NAME",
-                        importance
-                    )
-                    notificationManager.createNotificationChannel(notificationChannel)
-                }
-                val id: Int = intent.getIntExtra(NOTIFICATION_ID, 0)
-                notificationManager.notify(id, notification)
+                showNotification(context, intent)
             }
+    }
+
+    fun showNotification(context: Context, intent: Intent) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification: Notification? =
+            intent.getParcelableExtra(NOTIFICATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val notificationChannel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                "NOTIFICATION_CHANNEL_NAME",
+                importance
+            )
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
+        val id: Int = intent.getIntExtra(NOTIFICATION_ID, 0)
+        notificationManager.notify(id, notification)
     }
 
     companion object {

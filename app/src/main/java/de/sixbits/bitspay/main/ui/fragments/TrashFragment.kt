@@ -1,32 +1,33 @@
 package de.sixbits.bitspay.main.ui.fragments
 
-import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.sixbits.bitspay.R
 import de.sixbits.bitspay.databinding.FragmentTrashBinding
-import de.sixbits.bitspay.main.adapters.SearchResultRecyclerAdapter
-import de.sixbits.bitspay.main.callbacks.OnImageClickListener
+import de.sixbits.bitspay.main.adapters.TrashRecyclerAdapter
+import de.sixbits.bitspay.main.callbacks.OnTrashClickListener
 import de.sixbits.bitspay.main.view_model.TrashViewModel
 import de.sixbits.bitspay.network.model.ImageListItemModel
 import org.jetbrains.annotations.TestOnly
 
+private const val TAG = "TrashFragment"
+
 @AndroidEntryPoint
-class TrashFragment : Fragment(), OnImageClickListener {
+class TrashFragment : Fragment(), OnTrashClickListener {
     private lateinit var uiBinding: FragmentTrashBinding
     private lateinit var trashViewModel: TrashViewModel
-
-    private lateinit var searchRecyclerAdapter: SearchResultRecyclerAdapter
+    private lateinit var trashRecyclerAdapter: TrashRecyclerAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,7 +56,14 @@ class TrashFragment : Fragment(), OnImageClickListener {
             Snackbar.make(uiBinding.root, it, Snackbar.LENGTH_SHORT).show()
         })
         trashViewModel.imagesLiveData.observe(viewLifecycleOwner, {
-            searchRecyclerAdapter.switchItems(it)
+            if (it.isEmpty()) {
+                uiBinding.rvTrashList.visibility = View.GONE
+                uiBinding.lottie.visibility = View.VISIBLE
+            } else {
+                uiBinding.lottie.visibility = View.GONE
+                uiBinding.rvTrashList.visibility = View.VISIBLE
+                trashRecyclerAdapter.switchItems(it)
+            }
         })
     }
 
@@ -66,41 +74,66 @@ class TrashFragment : Fragment(), OnImageClickListener {
             .asDrawable()
 
         // initially we have no items
-        searchRecyclerAdapter = SearchResultRecyclerAdapter(
+        trashRecyclerAdapter = TrashRecyclerAdapter(
             listOf(),
             searchRecyclerRequestBuilder,
             this,
-            true
         )
 
         // Attach the adapter
-        uiBinding.rvTrashList.adapter = searchRecyclerAdapter
-    }
+        uiBinding.rvTrashList.adapter = trashRecyclerAdapter
 
-    override fun onClick(image: ImageListItemModel) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setMessage("Are you sure you want to delete this entry?")
-            .setPositiveButton("Yes") { _, _ ->
-                trashViewModel.deleteItem(image)
-            }
-            .setNegativeButton("No") { _, _ ->
-                // Respond to negative button press
-            }
-            .show()
-    }
-
-    override fun startDragging(view: RecyclerView.ViewHolder) {
-    }
-
-    override fun onSharePressed(image: ImageListItemModel) {
+        trashTouchHelper.attachToRecyclerView(uiBinding.rvTrashList)
     }
 
     override fun onDelete(image: ImageListItemModel) {
+        Log.d(TAG, "onDelete: ")
+        trashViewModel.deleteItem(image)
+    }
+
+    override fun startSwipe(view: RecyclerView.ViewHolder) {
+        Log.d(TAG, "startSwipe: ")
+        trashTouchHelper.startDrag(view)
+    }
+
+    override fun endSwipe(image: ImageListItemModel) {
         trashViewModel.deleteItem(image)
     }
 
     @TestOnly
     fun setTestViewModel(testViewModel: TrashViewModel) {
         trashViewModel = testViewModel
+    }
+
+    val trashTouchHelper by lazy {
+        val simpleSwapItemTouchCallback =
+            object : ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.START or
+                        ItemTouchHelper.END, 0
+            ) {
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    val adapter = recyclerView.adapter as TrashRecyclerAdapter
+                    val index = target.bindingAdapterPosition
+                    Log.d(TAG, "onMove: Trash Item")
+                    adapter.deleteAt(index)
+                    adapter.notifyDataSetChanged()
+                    return true
+                }
+
+                override fun onSwiped(
+                    viewHolder: RecyclerView.ViewHolder,
+                    direction: Int
+                ) {
+                    Log.d(TAG, "onSwiped: Trash Item")
+                    val adapter = viewHolder.bindingAdapter as TrashRecyclerAdapter
+                    adapter.deleteAt(viewHolder.bindingAdapterPosition)
+                }
+            }
+
+        ItemTouchHelper(simpleSwapItemTouchCallback)
     }
 }

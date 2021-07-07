@@ -1,8 +1,11 @@
 package de.sixbits.bitspay.main.ui.fragments
 
+import android.content.ContentValues
 import android.content.Intent
-import android.net.Uri
+import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bumptech.glide.Glide
@@ -21,27 +25,26 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import de.sixbits.bitspay.R
 import de.sixbits.bitspay.databinding.FragmentFeedBinding
-import de.sixbits.bitspay.main.adapters.SearchResultRecyclerAdapter
-import de.sixbits.bitspay.main.callbacks.OnImageClickListener
-import de.sixbits.bitspay.main.ui.helpers.DragHelper
-import de.sixbits.bitspay.main.ui.helpers.DragHelper.itemTouchHelper
+import de.sixbits.bitspay.main.adapters.FeedRecyclerAdapter
+import de.sixbits.bitspay.main.callbacks.OnFeedClickListener
 import de.sixbits.bitspay.main.view_model.FeedViewModel
 import de.sixbits.bitspay.main.view_model.SharedViewModel
 import de.sixbits.bitspay.network.model.ImageListItemModel
 import org.jetbrains.annotations.TestOnly
+import java.io.ByteArrayOutputStream
 
 private const val TAG = "FeedFragment"
 
 @AndroidEntryPoint
 class FeedFragment @JvmOverloads constructor(
     private val parentStoreOwner: ViewModelStoreOwner? = null
-) : Fragment(), OnImageClickListener {
+) : Fragment(), OnFeedClickListener {
 
     private lateinit var uiBinding: FragmentFeedBinding
     private lateinit var feedViewModel: FeedViewModel
     private lateinit var sharedViewModel: SharedViewModel
 
-    private lateinit var searchRecyclerAdapter: SearchResultRecyclerAdapter
+    private lateinit var searchRecyclerAdapter: FeedRecyclerAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -94,6 +97,31 @@ class FeedFragment @JvmOverloads constructor(
             Snackbar.make(uiBinding.root, it, Snackbar.LENGTH_SHORT).show()
         })
 
+        feedViewModel.shareImageLiveData.observe(viewLifecycleOwner, {
+            val bytes = ByteArrayOutputStream()
+            it.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+
+            val path = MediaStore.Images.Media.insertImage(
+                context?.contentResolver,
+                it,
+                "Title",
+                null
+            )
+            val imageIntent = Intent(Intent.ACTION_SEND)
+            imageIntent.type = "image/*"
+            imageIntent.putExtra(Intent.EXTRA_STREAM, path)
+            imageIntent.putExtra(Intent.EXTRA_TEXT, "From Bitspay")
+            startActivity(Intent.createChooser(imageIntent, "Share with"))
+
+
+//            val shareIntent: Intent = Intent().apply {
+//                action = Intent.ACTION_SEND
+//                putExtra(Intent.EXTRA_STREAM, it)
+//                type = "image/jpeg"
+//            }
+//            startActivity(Intent.createChooser(shareIntent, resources.getText(R.string.send_to)))
+        })
+
         feedViewModel.gridModeLiveData.observe(viewLifecycleOwner, {
             Log.d(TAG, "gridViewMode: $it")
             if (it == FeedViewModel.GridMode.MASONRY) {
@@ -129,7 +157,7 @@ class FeedFragment @JvmOverloads constructor(
             .asDrawable()
 
         // initially we have no items
-        searchRecyclerAdapter = SearchResultRecyclerAdapter(
+        searchRecyclerAdapter = FeedRecyclerAdapter(
             listOf(),
             searchRecyclerRequestBuilder,
             this
@@ -139,7 +167,7 @@ class FeedFragment @JvmOverloads constructor(
         uiBinding.rvSearchResult.adapter = searchRecyclerAdapter
         uiBinding.refreshLayout.isEnabled = false
 
-        itemTouchHelper.attachToRecyclerView(uiBinding.rvSearchResult)
+        feedTouchHelper.attachToRecyclerView(uiBinding.rvSearchResult)
     }
 
     override fun onClick(image: ImageListItemModel) {
@@ -155,26 +183,49 @@ class FeedFragment @JvmOverloads constructor(
     }
 
     override fun startDragging(view: RecyclerView.ViewHolder) {
-        itemTouchHelper.startDrag(view)
+        feedTouchHelper.startDrag(view)
     }
 
     override fun onSharePressed(image: ImageListItemModel) {
-        val shareIntent = Intent(Intent.ACTION_SEND)
-        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-
-        shareIntent.type = "image/*"
-
-        val uri = Uri.fromFile(requireContext().getFileStreamPath(image.thumbnail))
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
-
-        activity?.startActivity(shareIntent)
-    }
-
-    override fun onDelete(image: ImageListItemModel) {
+        feedViewModel.requestImageStream(image)
     }
 
     @TestOnly
     fun setTestViewModel(testViewModel: FeedViewModel) {
         feedViewModel = testViewModel
+    }
+
+    private val feedTouchHelper by lazy {
+        val simpleItemTouchCallback =
+            object : ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP or
+                        ItemTouchHelper.DOWN or
+                        ItemTouchHelper.START or
+                        ItemTouchHelper.END, 0
+            ) {
+
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    val adapter = recyclerView.adapter as FeedRecyclerAdapter
+                    val from = viewHolder.bindingAdapterPosition
+                    val to = target.bindingAdapterPosition
+                    adapter.swapItems(from, to)
+                    adapter.notifyItemMoved(from, to)
+
+                    return true
+                }
+
+                override fun onSwiped(
+                    viewHolder: RecyclerView.ViewHolder,
+                    direction: Int
+                ) {
+
+                }
+            }
+
+        ItemTouchHelper(simpleItemTouchCallback)
     }
 }

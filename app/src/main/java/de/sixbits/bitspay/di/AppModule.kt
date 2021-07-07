@@ -55,11 +55,9 @@ open class AppModule {
     @Singleton
     @Provides
     fun provideGlideInstance(
-        application: Application,
-        requestOptions: RequestOptions
+        application: Application
     ): RequestManager {
         return Glide.with(application)
-            .setDefaultRequestOptions(requestOptions)
     }
 
 
